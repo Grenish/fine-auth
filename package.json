@@ -1,11 +1,57 @@
 {
   "name": "fine-auth",
-  "module": "src/index.ts",
+  "description": "Auth that is just fine by default. A lightweight, secure, framework and database agnostic authentication library.",
+  "author": "Grenish Rai",
+  "license": "MIT",
+  "keywords": [
+    "auth",
+    "authentication",
+    "session",
+    "login",
+    "signup",
+    "typescript",
+    "postgresql",
+    "database-agnostic",
+    "framework-agnostic"
+  ],
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node && bun run build:types",
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+    "dev": "bun --watch src/index.ts",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "bun run clean && bun run build"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/node": "^20"
   },
   "peerDependencies": {
     "typescript": "^5"
-  }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Grenish/fine-auth"
+  },
+  "bugs": {
+    "url": "https://github.com/Grenish/fine-auth/issues"
+  },
+  "homepage": "https://github.com/Grenish/fine-auth"
 }
