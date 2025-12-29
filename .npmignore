@@ -1,0 +1,42 @@
+# Source files (we ship compiled dist/)
+src/
+
+# Examples
+examples/
+
+# Tests
+tests/
+__tests__/
+*.test.ts
+*.spec.ts
+coverage/
+*.lcov
+
+# Documentation source
+docs/
+
+# Development files
+idea.md
+.gitignore
+.eslintrc*
+.prettierrc*
+tsconfig.json
+bun.lock
+
+# IDE
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.tgz
+*.tsbuildinfo
+
+# Environment
+.env*
+
+# Misc
+*.log
