@@ -16,6 +16,7 @@ coverage/
 docs/
 
 # Development files
+test.md
 idea.md
 .gitignore
 .eslintrc*
