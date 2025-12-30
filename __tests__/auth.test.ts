@@ -34,6 +34,8 @@ describe("FineAuth - Email/Password Authentication", () => {
       expect(result.session).toBeDefined();
       expect(result.session.id).toBeDefined();
       expect(result.session.userId).toBe(result.user.id);
+      expect(result.token).toBeDefined();
+      expect(result.token).toContain(".");
     });
 
     test("should trim whitespace from email", async () => {
@@ -95,6 +97,7 @@ describe("FineAuth - Email/Password Authentication", () => {
       expect(result.user.email).toBe("test@example.com");
       expect(result.session).toBeDefined();
       expect(result.session.userId).toBe(result.user.id);
+      expect(result.token).toBeDefined();
     });
 
     test("should sign in with case-insensitive email", async () => {
@@ -147,25 +150,38 @@ describe("FineAuth - Email/Password Authentication", () => {
       });
 
       expect(result1.session.id).not.toBe(result2.session.id);
+      expect(result1.token).not.toBe(result2.token);
     });
   });
 
   describe("validateSession", () => {
-    test("should validate a valid session", async () => {
-      const { session } = await auth.signUp({
+    test("should validate a valid session token", async () => {
+      const { session, token } = await auth.signUp({
         email: "user@example.com",
         password: "password123",
       });
 
-      const result = await auth.validateSession(session.id);
+      const result = await auth.validateSession(token);
 
       expect(result).not.toBeNull();
       expect(result?.user.email).toBe("user@example.com");
       expect(result?.session.id).toBe(session.id);
     });
 
-    test("should return null for invalid session", async () => {
-      const result = await auth.validateSession("invalid-session-id");
+    test("should return null for invalid token format", async () => {
+      const result = await auth.validateSession("invalid-token-format");
+
+      expect(result).toBeNull();
+    });
+
+    test("should return null for tampered token", async () => {
+      const { token } = await auth.signUp({
+        email: "user@example.com",
+        password: "password123",
+      });
+
+      const tamperedToken = token + "modified";
+      const result = await auth.validateSession(tamperedToken);
 
       expect(result).toBeNull();
     });
@@ -179,7 +195,7 @@ describe("FineAuth - Email/Password Authentication", () => {
         session: { expiresIn: "1ms" }, // 1 millisecond
       });
 
-      const { session } = await shortAuth.signUp({
+      const { token } = await shortAuth.signUp({
         email: "shortlived@example.com",
         password: "password123",
       });
@@ -187,27 +203,32 @@ describe("FineAuth - Email/Password Authentication", () => {
       // Wait for session to expire
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const result = await shortAuth.validateSession(session.id);
+      const result = await shortAuth.validateSession(token);
 
       expect(result).toBeNull();
     });
   });
 
   describe("signOut", () => {
-    test("should invalidate a session", async () => {
-      const { session } = await auth.signUp({
+    test("should invalidate a session by token", async () => {
+      const { session, token } = await auth.signUp({
         email: "user@example.com",
         password: "password123",
       });
 
-      await auth.signOut(session.id);
+      await auth.signOut(token);
 
-      const result = await auth.validateSession(session.id);
+      // Verify db session is gone
+      const dbSession = await db.adapter.getSession(session.id);
+      expect(dbSession).toBeNull();
+
+      // Verify validation fails
+      const result = await auth.validateSession(token);
       expect(result).toBeNull();
     });
 
-    test("should not throw error for non-existent session", async () => {
-      await auth.signOut("non-existent-session");
+    test("should not throw error for non-existent session/token", async () => {
+      await auth.signOut("non-existent-token");
       // If we get here without throwing, the test passes
       expect(true).toBe(true);
     });
@@ -235,8 +256,8 @@ describe("FineAuth - Email/Password Authentication", () => {
       await auth.signOutAll(user.id);
 
       // All sessions should be invalid
-      const result1 = await auth.validateSession(session1.session.id);
-      const result2 = await auth.validateSession(session2.session.id);
+      const result1 = await auth.validateSession(session1.token);
+      const result2 = await auth.validateSession(session2.token);
 
       expect(result1).toBeNull();
       expect(result2).toBeNull();
