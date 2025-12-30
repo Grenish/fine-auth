@@ -7,7 +7,13 @@ import type {
   SignInCredentials,
   SafeUser,
 } from "./types.ts";
-import { hashPassword, verifyPassword, generateSessionId } from "./crypto.ts";
+import {
+  hashPassword,
+  verifyPassword,
+  generateSessionId,
+  signSessionId,
+  verifySessionId,
+} from "./crypto.ts";
 import {
   InvalidCredentialsError,
   UserAlreadyExistsError,
@@ -77,6 +83,13 @@ export class FineAuth {
       throw new ConfigurationError("secret is required");
     }
 
+    if (config.secret.length < 32) {
+      console.warn(
+        "\x1b[33m%s\x1b[0m", // Yellow
+        "WARN: Your 'secret' is too short! It is recommended to use at least 32 characters for a secure environment."
+      );
+    }
+
     if (!config.db) {
       throw new ConfigurationError("db is required");
     }
@@ -120,15 +133,20 @@ export class FineAuth {
     });
 
     // Create session
+    const sessionId = generateSessionId();
     const session = await this.db.adapter.createSession({
-      id: generateSessionId(),
+      id: sessionId,
       userId: user.id,
       expiresAt: new Date(Date.now() + this.sessionExpiresIn),
     });
 
+    // Sign session ID
+    const token = await signSessionId(sessionId, this.config.secret);
+
     return {
       user: toSafeUser(user),
       session,
+      token,
     };
   }
 
@@ -155,23 +173,34 @@ export class FineAuth {
     }
 
     // Create new session
+    const sessionId = generateSessionId();
     const session = await this.db.adapter.createSession({
-      id: generateSessionId(),
+      id: sessionId,
       userId: user.id,
       expiresAt: new Date(Date.now() + this.sessionExpiresIn),
     });
 
+    // Sign session ID
+    const token = await signSessionId(sessionId, this.config.secret);
+
     return {
       user: toSafeUser(user),
       session,
+      token,
     };
   }
 
   /**
-   * Validate a session by ID
+   * Validate a session by token
    * Returns user and session if valid, null if invalid or expired
    */
-  async validateSession(sessionId: string): Promise<SessionValidationResult> {
+  async validateSession(token: string): Promise<SessionValidationResult> {
+    // Verify signature
+    const sessionId = await verifySessionId(token, this.config.secret);
+    if (!sessionId) {
+      return null;
+    }
+
     // Get session
     const session = await this.db.adapter.getSession(sessionId);
     if (!session) {
@@ -202,7 +231,13 @@ export class FineAuth {
   /**
    * Sign out by invalidating a session
    */
-  async signOut(sessionId: string): Promise<void> {
+  async signOut(token: string): Promise<void> {
+    // Verify signature before deleting (prevents DOS attacks deleting random IDs)
+    const sessionId = await verifySessionId(token, this.config.secret);
+    if (!sessionId) {
+      return; // Invalid token, do nothing
+    }
+
     await this.db.adapter.deleteSession(sessionId);
   }
 
