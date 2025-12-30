@@ -7,13 +7,13 @@ import { auth } from "./auth";
  */
 export async function getSession() {
   const cookieStore = await cookies();
-  const sessionId = cookieStore.get("session")?.value;
+  const token = cookieStore.get("session")?.value;
 
-  if (!sessionId) {
+  if (!token) {
     return null;
   }
 
-  return auth.validateSession(sessionId);
+  return auth.validateSession(token);
 }
 
 /**

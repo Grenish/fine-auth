@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user and session
-    const { user, session } = await auth.signUp({ email, password });
+    const { user, session, token } = await auth.signUp({ email, password });
 
     // Set session cookie
     const cookieStore = await cookies();
-    cookieStore.set(sessionCookieConfig.name, session.id, {
+    cookieStore.set(sessionCookieConfig.name, token, {
       httpOnly: sessionCookieConfig.httpOnly,
       secure: sessionCookieConfig.secure,
       sameSite: sessionCookieConfig.sameSite,

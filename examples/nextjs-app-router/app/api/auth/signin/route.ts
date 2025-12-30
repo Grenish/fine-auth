@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sign in
-    const { user, session } = await auth.signIn({ email, password });
+    const { user, session, token } = await auth.signIn({ email, password });
 
     // Create response with user data
     const response = NextResponse.json(
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Set session cookie
-    response.cookies.set(sessionCookieConfig.name, session.id, {
+    response.cookies.set(sessionCookieConfig.name, token, {
       httpOnly: sessionCookieConfig.httpOnly,
       secure: sessionCookieConfig.secure,
       sameSite: sessionCookieConfig.sameSite,

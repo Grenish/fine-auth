@@ -5,17 +5,17 @@ import { getSession } from "../../../../lib/session";
 
 export async function POST() {
   try {
-    const session = await getSession();
+    const cookieStore = await cookies();
+    const token = cookieStore.get(sessionCookieConfig.name)?.value;
 
-    if (!session) {
+    if (!token) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
     // Invalidate the session
-    await auth.signOut(session.session.id);
+    await auth.signOut(token);
 
     // Clear the session cookie
-    const cookieStore = await cookies();
     cookieStore.delete(sessionCookieConfig.name);
 
     return NextResponse.json({ message: "Signed out successfully" });

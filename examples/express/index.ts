@@ -63,6 +63,7 @@ app.use(express.json());
 interface AuthenticatedRequest extends Request {
   user?: { id: string; email: string; createdAt: Date };
   session?: { id: string; userId: string; expiresAt: Date; createdAt: Date };
+  token?: string;
 }
 
 async function authenticateRequest(
@@ -70,23 +71,24 @@ async function authenticateRequest(
   res: Response,
   next: NextFunction
 ) {
-  // Get session ID from Authorization header or cookie
+  // Get token from Authorization header or cookie
   const authHeader = req.headers.authorization;
-  const sessionId = authHeader?.startsWith("Bearer ")
+  const token = authHeader?.startsWith("Bearer ")
     ? authHeader.slice(7)
     : req.headers.cookie
         ?.split("; ")
-        .find((c) => c.startsWith("session="))
+        .find((c) => c.startsWith("token="))
         ?.split("=")[1];
 
-  if (!sessionId) {
+  if (!token) {
     return next();
   }
 
-  const result = await auth.validateSession(sessionId);
+  const result = await auth.validateSession(token);
   if (result) {
     req.user = result.user;
     req.session = result.session;
+    req.token = token;
   }
 
   next();
@@ -123,10 +125,10 @@ app.post("/auth/signup", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const { user, session } = await auth.signUp({ email, password });
+    const { user, session, token } = await auth.signUp({ email, password });
 
     // Set session cookie
-    res.cookie("session", session.id, {
+    res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -136,7 +138,7 @@ app.post("/auth/signup", async (req: Request, res: Response) => {
     return res.status(201).json({
       message: "Account created successfully",
       user,
-      sessionId: session.id,
+      token,
     });
   } catch (error) {
     if (error instanceof UserAlreadyExistsError) {
@@ -159,10 +161,10 @@ app.post("/auth/signin", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const { user, session } = await auth.signIn({ email, password });
+    const { user, session, token } = await auth.signIn({ email, password });
 
     // Set session cookie
-    res.cookie("session", session.id, {
+    res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -172,7 +174,7 @@ app.post("/auth/signin", async (req: Request, res: Response) => {
     return res.json({
       message: "Signed in successfully",
       user,
-      sessionId: session.id,
+      token,
     });
   } catch (error) {
     if (error instanceof InvalidCredentialsError) {
@@ -192,10 +194,12 @@ app.post(
   requireAuth,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await auth.signOut(req.session!.id);
+      if (req.token) {
+        await auth.signOut(req.token);
+      }
 
       // Clear session cookie
-      res.clearCookie("session");
+      res.clearCookie("token");
 
       return res.json({ message: "Signed out successfully" });
     } catch (error) {
