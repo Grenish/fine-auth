@@ -50,7 +50,12 @@ function parseDuration(duration: string | number): number {
 /**
  * Remove sensitive fields from user object
  */
-function toSafeUser(user: { id: string; email: string; hashedPassword: string; createdAt: Date }): SafeUser {
+function toSafeUser(user: {
+  id: string;
+  email: string;
+  hashedPassword: string;
+  createdAt: Date;
+}): SafeUser {
   return {
     id: user.id,
     email: user.email,
@@ -96,8 +101,11 @@ export class FineAuth {
   async signUp(credentials: SignUpCredentials): Promise<AuthResult> {
     const { email, password } = credentials;
 
+    // Normalize email to lowercase for case-insensitive matching
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Check if user already exists
-    const existingUser = await this.db.adapter.getUserByEmail(email);
+    const existingUser = await this.db.adapter.getUserByEmail(normalizedEmail);
     if (existingUser) {
       throw new UserAlreadyExistsError();
     }
@@ -107,7 +115,7 @@ export class FineAuth {
 
     // Create user
     const user = await this.db.adapter.createUser({
-      email,
+      email: normalizedEmail,
       hashedPassword,
     });
 
@@ -131,8 +139,11 @@ export class FineAuth {
   async signIn(credentials: SignInCredentials): Promise<AuthResult> {
     const { email, password } = credentials;
 
+    // Normalize email to lowercase for case-insensitive matching
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Find user by email
-    const user = await this.db.adapter.getUserByEmail(email);
+    const user = await this.db.adapter.getUserByEmail(normalizedEmail);
     if (!user) {
       throw new InvalidCredentialsError();
     }
