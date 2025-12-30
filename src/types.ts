@@ -30,6 +30,7 @@ export interface Session {
 export interface AuthResult {
   user: SafeUser;
   session: Session;
+  token: string;
 }
 
 export type SessionValidationResult = {
