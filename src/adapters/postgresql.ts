@@ -20,7 +20,7 @@ export function createPostgresqlAdapter(pool: PgPool): DatabaseAdapter {
         `INSERT INTO users (id, email, hashed_password, created_at)
          VALUES ($1, $2, $3, NOW())
          RETURNING id, email, hashed_password, created_at`,
-        [id, data.email, data.hashedPassword]
+        [id, data.email.toLowerCase(), data.hashedPassword]
       );
 
       const row = result.rows[0];
@@ -41,7 +41,7 @@ export function createPostgresqlAdapter(pool: PgPool): DatabaseAdapter {
         `SELECT id, email, hashed_password, created_at
          FROM users
          WHERE email = $1`,
-        [email]
+        [email.toLowerCase()]
       );
 
       const row = result.rows[0];
@@ -139,9 +139,9 @@ export function createPostgresqlAdapter(pool: PgPool): DatabaseAdapter {
         )
       `);
 
-      // Create index on email for faster lookups
+      // Create index on email (lowercase) for faster lookups
       await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_users_email ON users (email)
+        CREATE INDEX IF NOT EXISTS idx_users_email ON users (LOWER(email))
       `);
 
       // Create sessions table
