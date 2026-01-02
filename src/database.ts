@@ -1,6 +1,13 @@
-import type { DatabaseConfig, DatabaseAdapter, DatabaseInstance, PgPool } from "./types.ts";
+import type {
+  DatabaseConfig,
+  DatabaseAdapter,
+  DatabaseInstance,
+  PgPool,
+  MongoDatabase,
+} from "./types.ts";
 import { createMemoryAdapter } from "./adapters/memory.ts";
 import { createPostgresqlAdapter } from "./adapters/postgresql.ts";
+import { createMongoAdapter } from "./adapters/mongo.ts";
 import { ConfigurationError } from "./errors.ts";
 
 /**
@@ -28,6 +35,13 @@ export class Database implements DatabaseInstance {
         return createPostgresqlAdapter(config.client as PgPool);
 
       case "mongodb":
+        if (!config.client) {
+          throw new ConfigurationError(
+            "MongoDB requires a client (Db) to be provided"
+          );
+        }
+        return createMongoAdapter(config.client as MongoDatabase);
+
       case "mongoose":
       case "prisma":
       case "drizzle-pg":
@@ -38,9 +52,7 @@ export class Database implements DatabaseInstance {
         );
 
       default:
-        throw new ConfigurationError(
-          `Unknown database type: "${config.type}"`
-        );
+        throw new ConfigurationError(`Unknown database type: "${config.type}"`);
     }
   }
 
