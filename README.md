@@ -7,11 +7,11 @@
   A lightweight, secure, framework and database agnostic authentication library.
   <br>
   <br>
-  <a href="https://github.com/Grenish/fine-auth">
+  <a href="https://www.npmjs.com/package/fine-auth">
     <img src="https://img.shields.io/npm/v/fine-auth?style=flat&colorA=000000&colorB=000000" alt="npm version" />
   </a>
-  <a href="https://github.com/Grenish/fine-auth">
-    <img src="https://img.shields.io/npm/l/fine-auth?style=flat&colorA=000000&colorB=000000" alt="license" />
+  <a href="https://github.com/Grenish/fine-auth/blob/main/LICENSE">
+    <img src="https://img.shields.io/npm/v/fine-auth?style=flat&colorA=000000&colorB=000000" alt="license" />
   </a>
   <br>
   <br>
