@@ -37,4 +37,7 @@ export type {
   SignInCredentials,
   // PostgreSQL types (for users implementing custom adapters)
   PgPool,
+  // MongoDB types
+  MongoDatabase,
+  MongoCollection,
 } from "./types.ts";
