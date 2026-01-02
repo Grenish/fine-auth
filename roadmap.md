@@ -4,10 +4,10 @@
 
 - [x] Memory Adapter
 - [x] PostgreSQL Adapter
+- [x] MongoDB Adapter
 
 ## Upcoming Adapters
 
-- [ ] MongoDB Adapter
 - [ ] Mongoose Adapter
 - [ ] Prisma Adapter
 - [ ] Drizzle Adapter (PostgreSQL & MySQL)
