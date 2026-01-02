@@ -139,3 +139,19 @@ export interface PgSessionRow {
   expires_at: Date;
   created_at: Date;
 }
+
+// ============================================
+// MongoDB Specific Types
+// ============================================
+
+export interface MongoDatabase {
+  collection(name: string): MongoCollection;
+}
+
+export interface MongoCollection<T = any> {
+  findOne(filter: any): Promise<T | null>;
+  insertOne(doc: any): Promise<{ insertedId: any }>;
+  deleteOne(filter: any): Promise<{ deletedCount: number }>;
+  deleteMany(filter: any): Promise<{ deletedCount: number }>;
+  createIndex(indexSpec: any, options?: any): Promise<string>;
+}
